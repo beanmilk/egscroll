@@ -1,4 +1,4 @@
-/*! iScroll v5.1.3 ~ (c) 2008-2014 Matteo Spinelli ~ http://cubiq.org/license */
+/*! iScroll v5.1.3 ~ (c) 2008-2016 Matteo Spinelli ~ http://cubiq.org/license */
 (function (window, document, Math) {
 var rAF = window.requestAnimationFrame	||
 	window.webkitRequestAnimationFrame	||
@@ -6,6 +6,60 @@ var rAF = window.requestAnimationFrame	||
 	window.oRequestAnimationFrame		||
 	window.msRequestAnimationFrame		||
 	function (callback) { window.setTimeout(callback, 1000 / 60); };
+
+//addEventListener polyfill 1.0 / Eirik Backer / MIT Licence
+(function(win, doc){
+	if(win.addEventListener)return;		//No need to polyfill
+
+	function docHijack(p){var old = doc[p];doc[p] = function(v){return addListen(old(v));};}
+	function addEvent(on, fn, self){
+		return (self = this).attachEvent('on' + on, function(evt){
+			var e = evt || win.event;
+			e.preventDefault  = evt.preventDefault  || function(){e.returnValue = false;};
+			e.stopPropagation = evt.stopPropagation || function(){e.cancelBubble = true;};
+
+			/** custom start by sculove **/
+			e.currentTarget = e.currentTarget || self;
+ 			e.target = e.target || e.srcElement;
+ 			if (!e.relatedTarget) {
+          if (e.type == 'mouseover') e.relatedTarget = e.fromElement;
+          if (e.type == 'mouseout') e.relatedTarget = e.toElement;
+      }
+
+			if (!e.pageX && e.clientX) {
+				var html = document.documentElement;
+				var body = document.body;
+				e.pageX = e.clientX + (html.scrollLeft || body && body.scrollLeft || 0);
+				e.pageX -= html.clientLeft || 0;
+				e.pageY = e.clientY + (html.scrollTop || body && body.scrollTop || 0);
+				e.pageY -= html.clientTop || 0;
+			}
+
+			if (typeof fn === 'function') {
+				fn.call(self, e);
+			} else if (typeof fn === 'object' && fn.handleEvent) {
+				fn.handleEvent.call(fn, e);
+			}
+			/** custom end by sculove **/
+		});
+	}
+	function addListen(obj, i){
+		i = obj.length;
+		if(i)while(i--)obj[i].addEventListener = addEvent;
+		else obj.addEventListener = addEvent;
+		return obj;
+	}
+
+	addListen([doc, win]);
+	if('Element' in win) win.Element.prototype.addEventListener = addEvent;			//IE8
+	else{																			//IE < 8
+		doc.attachEvent('onreadystatechange', function(){addListen(doc.all);});		//Make sure we also init at domReady
+		docHijack('getElementsByTagName');
+		docHijack('getElementById');
+		docHijack('createElement');
+		addListen(doc.all);
+	}
+})(window, document);
 
 var utils = (function () {
 	var me = {};
@@ -48,8 +102,8 @@ var utils = (function () {
 	};
 
 	me.prefixPointerEvent = function (pointerEvent) {
-		return window.MSPointerEvent ? 
-			'MSPointer' + pointerEvent.charAt(9).toUpperCase() + pointerEvent.substr(10):
+		return window.MSPointerEvent ?
+			'MSPointer' + pointerEvent.charAt(7).toUpperCase() + pointerEvent.substr(8):
 			pointerEvent;
 	};
 
@@ -86,7 +140,7 @@ var utils = (function () {
 		hasTransform: _transform !== false,
 		hasPerspective: _prefixStyle('perspective') in _elementStyle,
 		hasTouch: 'ontouchstart' in window,
-		hasPointer: window.PointerEvent || window.MSPointerEvent, // IE10 is prefixed
+		hasPointer: !!(window.PointerEvent || window.MSPointerEvent), // IE10 is prefixed
 		hasTransition: _prefixStyle('transition') in _elementStyle
 	});
 
@@ -258,8 +312,11 @@ function IScroll (el, options) {
 
 		snapThreshold: 0.334,
 
-// INSERT POINT: OPTIONS 
+// INSERT POINT: OPTIONS
 
+		disablePointer : !utils.hasPointer,
+		disableTouch : utils.hasPointer || !utils.hasTouch,
+		disableMouse : utils.hasPointer || utils.hasTouch,
 		startX: 0,
 		startY: 0,
 		scrollY: true,
@@ -275,7 +332,8 @@ function IScroll (el, options) {
 
 		HWCompositing: true,
 		useTransition: true,
-		useTransform: true
+		useTransform: true,
+		bindToWrapper: typeof window.onmousedown == "undefined"
 	};
 
 	for ( var i in options ) {
@@ -315,7 +373,7 @@ function IScroll (el, options) {
 
 // INSERT POINT: NORMALIZATION
 
-	// Some defaults	
+	// Some defaults
 	this.x = 0;
 	this.y = 0;
 	this.directionX = 0;
@@ -378,7 +436,17 @@ IScroll.prototype = {
 	_start: function (e) {
 		// React to left mouse button only
 		if ( utils.eventType[e.type] != 1 ) {
-			if ( e.button !== 0 ) {
+			// http://unixpapa.com/js/mouse.html
+			var button;
+			if (!e.which) {
+				/* IE case */
+				button = (e.button < 2) ? 0 :
+				         ((e.button == 4) ? 1 : 2);
+			} else {
+				/* All others */
+				button = e.button;
+			}
+			if ( button !== 0 ) {
 				return;
 			}
 		}
@@ -401,9 +469,7 @@ IScroll.prototype = {
 		this.directionX = 0;
 		this.directionY = 0;
 		this.directionLocked = 0;
-
 		this._transitionTime();
-
 		this.startTime = utils.getTime();
 
 		if ( this.options.useTransition && this.isInTransition ) {
