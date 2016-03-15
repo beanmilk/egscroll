@@ -1,3 +1,20 @@
+# egscroll
+egscroll is forked from [iscroll5 (5.1.3)](https://github.com/cubiq/iscroll)
+
+### feature
+ - supports IE8+
+ - adjust resonable options automatically
+ - fix many bugs
+
+
+### Install
+```bash
+bower install egscroll#master
+```
+
+--------------------
+
+
 <h1 id="intro">iScroll, smooth scrolling for the web</h1>
 
 iScroll is a high performance, small footprint, dependency free, multi-platform javascript scroller.
