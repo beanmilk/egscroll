@@ -5,6 +5,60 @@ var rAF = window.requestAnimationFrame	||
 	window.msRequestAnimationFrame		||
 	function (callback) { window.setTimeout(callback, 1000 / 60); };
 
+//addEventListener polyfill 1.0 / Eirik Backer / MIT Licence
+(function(win, doc){
+	if(win.addEventListener)return;		//No need to polyfill
+
+	function docHijack(p){var old = doc[p];doc[p] = function(v){return addListen(old(v));};}
+	function addEvent(on, fn, self){
+		return (self = this).attachEvent('on' + on, function(evt){
+			var e = evt || win.event;
+			e.preventDefault  = evt.preventDefault  || function(){e.returnValue = false;};
+			e.stopPropagation = evt.stopPropagation || function(){e.cancelBubble = true;};
+
+			/** custom start by sculove **/
+			e.currentTarget = e.currentTarget || self;
+ 			e.target = e.target || e.srcElement;
+ 			if (!e.relatedTarget) {
+          if (e.type == 'mouseover') e.relatedTarget = e.fromElement;
+          if (e.type == 'mouseout') e.relatedTarget = e.toElement;
+      }
+
+			if (!e.pageX && e.clientX) {
+				var html = document.documentElement;
+				var body = document.body;
+				e.pageX = e.clientX + (html.scrollLeft || body && body.scrollLeft || 0);
+				e.pageX -= html.clientLeft || 0;
+				e.pageY = e.clientY + (html.scrollTop || body && body.scrollTop || 0);
+				e.pageY -= html.clientTop || 0;
+			}
+
+			if (typeof fn === 'function') {
+				fn.call(self, e);
+			} else if (typeof fn === 'object' && fn.handleEvent) {
+				fn.handleEvent.call(fn, e);
+			}
+			/** custom end by sculove **/
+		});
+	}
+	function addListen(obj, i){
+		i = obj.length;
+		if(i)while(i--)obj[i].addEventListener = addEvent;
+		else obj.addEventListener = addEvent;
+		return obj;
+	}
+
+	addListen([doc, win]);
+	if('Element' in win) win.Element.prototype.addEventListener = addEvent;			//IE8
+	else{																			//IE < 8
+		doc.attachEvent('onreadystatechange', function(){addListen(doc.all);});		//Make sure we also init at domReady
+		docHijack('getElementsByTagName');
+		docHijack('getElementById');
+		docHijack('createElement');
+		addListen(doc.all);
+	}
+})(window, document);
+
 var utils = (function () {
 	var me = {};
 
@@ -46,7 +100,7 @@ var utils = (function () {
 	};
 
 	me.prefixPointerEvent = function (pointerEvent) {
-		return window.MSPointerEvent ? 
+		return window.MSPointerEvent ?
 			'MSPointer' + pointerEvent.charAt(9).toUpperCase() + pointerEvent.substr(10):
 			pointerEvent;
 	};
@@ -84,7 +138,7 @@ var utils = (function () {
 		hasTransform: _transform !== false,
 		hasPerspective: _prefixStyle('perspective') in _elementStyle,
 		hasTouch: 'ontouchstart' in window,
-		hasPointer: window.PointerEvent || window.MSPointerEvent, // IE10 is prefixed
+		hasPointer: !!(window.PointerEvent || window.MSPointerEvent), // IE10 is prefixed
 		hasTransition: _prefixStyle('transition') in _elementStyle
 	});
 

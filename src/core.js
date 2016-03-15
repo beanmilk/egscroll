@@ -26,7 +26,8 @@ function IScroll (el, options) {
 
 		HWCompositing: true,
 		useTransition: true,
-		useTransform: true
+		useTransform: true,
+		bindToWrapper: typeof window.onmousedown == "undefined"
 	};
 
 	for ( var i in options ) {
@@ -107,7 +108,17 @@ IScroll.prototype = {
 	_start: function (e) {
 		// React to left mouse button only
 		if ( utils.eventType[e.type] != 1 ) {
-			if ( e.button !== 0 ) {
+			// http://unixpapa.com/js/mouse.html
+			var button;
+			if (!e.which) {
+				/* IE case */
+				button = (e.button < 2) ? 0 :
+				         ((e.button == 4) ? 1 : 2);
+			} else {
+				/* All others */
+				button = e.button;
+			}
+			if ( button !== 0 ) {
 				return;
 			}
 		}
@@ -130,9 +141,7 @@ IScroll.prototype = {
 		this.directionX = 0;
 		this.directionY = 0;
 		this.directionLocked = 0;
-
 		this._transitionTime();
-
 		this.startTime = utils.getTime();
 
 		if ( this.options.useTransition && this.isInTransition ) {
