@@ -5,7 +5,7 @@ var fs = require('fs');
 var hint = require("jshint").JSHINT;
 var uglify = require('uglify-js');
 
-var banner = '/*! iScroll v' + pkg.version + ' ~ (c) 2008-' + (new Date().getFullYear()) + ' Matteo Spinelli ~ http://cubiq.org/license */\n';
+var banner = '/*! egscroll v' + pkg.version + ' ~ (c) 2008-' + (new Date().getFullYear()) + ' Matteo Spinelli ~ http://cubiq.org/license */\n';
 
 var releases = {
 	lite: {
@@ -114,7 +114,7 @@ function build (release) {
 
 			// Insert point
 			for ( var i in postProcessing.insert ) {
-				value = postProcessing.insert[i].substr(postProcessing.insert[i].length-3) == '.js' ? 
+				value = postProcessing.insert[i].substr(postProcessing.insert[i].length-3) == '.js' ?
 					fs.readFileSync('src/' + postProcessing.insert[i]) :
 					postProcessing.insert[i];
 

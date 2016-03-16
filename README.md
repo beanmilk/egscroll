@@ -1,13 +1,14 @@
 # egscroll
 egscroll is forked from [iscroll5 (5.1.3)](https://github.com/cubiq/iscroll)
 
-### feature
+### Feature
  - supports IE8+
  - adjust resonable options automatically
- - fix many bugs
-
+ - fixed many bugs
+  https://github.com/naver/egscroll/wiki/Bug-fixed-in-egscroll
 
 ### Install
+intall egscroll using bower
 ```bash
 bower install egscroll#master
 ```
@@ -282,11 +283,11 @@ Default: `0`
 
 Set this to `true` to let iScroll emit a custom `tap` event when the scroll area is clicked/tapped but not scrolled.
 
-This is the suggested way to handle user interaction with clickable elements. To listen to the tap event you would add an event listener as you would do for a standard event. Example: 
+This is the suggested way to handle user interaction with clickable elements. To listen to the tap event you would add an event listener as you would do for a standard event. Example:
 
     element.addEventListener('tap', doSomething, false); \\ Native
     $('#element').on('tap', doSomething); \\ jQuery
-    
+
 You can also customize the event name by passing a string. Eg:
 
     tap: 'myCustomTapEvent'
@@ -469,7 +470,7 @@ The available options are: `quadratic`, `circular`, `back`, `bounce`, `elastic`.
 Same as above but X and Y are relative to the current position.
 
     myScroll.scrollBy(0, -10);
-    
+
 Would scroll 10 pixels down. If you are at -100, you'll end up at -110.
 
 ### scrollToElement(el, time, offsetX, offsetY, easing)
@@ -673,7 +674,7 @@ To ensure that javascript gets the updated properties you should defer the refre
 
     function onCompletion () {
         // Update here your DOM
-        
+
         setTimeout(function () {
             myScroll.refresh();
         }, 0);

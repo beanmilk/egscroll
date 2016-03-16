@@ -1,9 +1,9 @@
 {
-  "name": "iscroll",
+  "name": "egscroll",
   "description": "Smooth scrolling for the web",
   "version": "5.1.3",
   "homepage": "http://cubiq.org/iscroll-4",
-  "author": "Matteo Spinelli <matteo@cubiq.org> (http://cubiq.org)",
+  "author": "NAVER corp",
   "keywords": [
     "scrolling",
     "carousel",
@@ -20,10 +20,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/cubiq/iscroll.git"
+    "url": "https://github.com/naver/egscroll.git"
   },
   "bugs": {
-    "url": "https://github.com/cubiq/iscroll/issues"
+    "url": "https://github.com/naver/egscroll/issues"
   },
   "license": "MIT"
 }
