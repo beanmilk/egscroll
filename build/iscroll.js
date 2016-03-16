@@ -423,7 +423,10 @@ IScroll.prototype = {
 
 	destroy: function () {
 		this._initEvents(true);
-
+		//egscroll [#12] start
+		clearTimeout(this.resizeTimeout);
+ 		this.resizeTimeout = null;
+ 		//egscroll [#12] end
 		this._execEvent('destroy');
 	},
 
@@ -1116,7 +1119,10 @@ IScroll.prototype = {
 		if ( !this.enabled ) {
 			return;
 		}
-
+		//egscroll [#12] start
+		clearTimeout(this.wheelTimeout);
+		this.wheelTimeout = null;
+		//egscroll [#12] end
 		e.preventDefault();
 		e.stopPropagation();
 
@@ -1776,6 +1782,12 @@ Indicator.prototype = {
 	},
 
 	destroy: function () {
+		//egscroll [#12] start
+		if ( this.options.fadeScrollbars ) {
+			clearTimeout(this.fadeTimeout);
+			this.fadeTimeout = null;
+		}
+		//egscroll [#12] end
 		if ( this.options.interactive ) {
 			utils.removeEvent(this.indicator, 'touchstart', this);
 			utils.removeEvent(this.indicator, utils.prefixPointerEvent('pointerdown'), this);
@@ -1957,7 +1969,7 @@ Indicator.prototype = {
 				this.maxBoundaryX = this.maxPosX;
 			}
 
-			this.sizeRatioX = this.options.speedRatioX || (this.scroller.maxScrollX && (this.maxPosX / this.scroller.maxScrollX));	
+			this.sizeRatioX = this.options.speedRatioX || (this.scroller.maxScrollX && (this.maxPosX / this.scroller.maxScrollX));
 		}
 
 		if ( this.options.listenY ) {

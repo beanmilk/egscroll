@@ -15,7 +15,10 @@
 		if ( !this.enabled ) {
 			return;
 		}
-
+		//egscroll [#12] start
+		clearTimeout(this.wheelTimeout);
+		this.wheelTimeout = null;
+		//egscroll [#12] end
 		e.preventDefault();
 		e.stopPropagation();
 

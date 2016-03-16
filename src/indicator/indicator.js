@@ -114,6 +114,12 @@ Indicator.prototype = {
 	},
 
 	destroy: function () {
+		//egscroll [#12] start
+		if ( this.options.fadeScrollbars ) {
+			clearTimeout(this.fadeTimeout);
+			this.fadeTimeout = null;
+		}
+		//egscroll [#12] end
 		if ( this.options.interactive ) {
 			utils.removeEvent(this.indicator, 'touchstart', this);
 			utils.removeEvent(this.indicator, utils.prefixPointerEvent('pointerdown'), this);
@@ -295,7 +301,7 @@ Indicator.prototype = {
 				this.maxBoundaryX = this.maxPosX;
 			}
 
-			this.sizeRatioX = this.options.speedRatioX || (this.scroller.maxScrollX && (this.maxPosX / this.scroller.maxScrollX));	
+			this.sizeRatioX = this.options.speedRatioX || (this.scroller.maxScrollX && (this.maxPosX / this.scroller.maxScrollX));
 		}
 
 		if ( this.options.listenY ) {
