@@ -317,10 +317,11 @@ function IScroll (el, options) {
 		snapThreshold: 0.334,
 
 // INSERT POINT: OPTIONS
-
+		//egscroll [#1] start
 		disablePointer : !utils.hasPointer,
 		disableTouch : utils.hasPointer || !utils.hasTouch,
 		disableMouse : utils.hasPointer || utils.hasTouch,
+		//egscroll [#1] end
 		startX: 0,
 		startY: 0,
 		scrollY: true,
@@ -337,6 +338,7 @@ function IScroll (el, options) {
 		HWCompositing: true,
 		useTransition: true,
 		useTransform: true,
+		//egscroll [#4]
 		bindToWrapper: typeof window.onmousedown == "undefined"
 	};
 
@@ -440,6 +442,7 @@ IScroll.prototype = {
 	_start: function (e) {
 		// React to left mouse button only
 		if ( utils.eventType[e.type] != 1 ) {
+			//egscroll [#4] start
 			// http://unixpapa.com/js/mouse.html
 			var button;
 			if (!e.which) {
@@ -453,6 +456,7 @@ IScroll.prototype = {
 			if ( button !== 0 ) {
 				return;
 			}
+			//egscroll [#4] end
 		}
 
 		if ( !this.enabled || (this.initiated && utils.eventType[e.type] !== this.initiated) ) {
