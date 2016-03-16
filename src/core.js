@@ -145,7 +145,11 @@ IScroll.prototype = {
 		this.directionX = 0;
 		this.directionY = 0;
 		this.directionLocked = 0;
-		this._transitionTime();
+		//egscroll [#11] start
+		if ( this.options.useTransition ) {
+			this._transitionTime();
+		}
+		//egscroll [#11] end
 		this.startTime = utils.getTime();
 
 		if ( this.options.useTransition && this.isInTransition ) {
@@ -478,9 +482,13 @@ IScroll.prototype = {
 
 		this.isInTransition = this.options.useTransition && time > 0;
 
-		if ( !time || (this.options.useTransition && easing.style) ) {
-			this._transitionTimingFunction(easing.style);
-			this._transitionTime(time);
+		if ( !time ) {
+			//egscroll [#11] start
+			if (this.options.useTransition && easing.style) {
+				this._transitionTimingFunction(easing.style);
+				this._transitionTime(time);
+			}
+			//egscroll [#11] end
 			this._translate(x, y);
 		} else {
 			this._animate(x, y, time, easing.fn);
