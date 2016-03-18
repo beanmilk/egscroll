@@ -1,4 +1,4 @@
-/*! iScroll v5.1.3 ~ (c) 2008-2014 Matteo Spinelli ~ http://cubiq.org/license */
+/*! egscroll v5.1.3 ~ (c) 2008-2016 Matteo Spinelli ~ http://cubiq.org/license */
 (function (window, document, Math) {
 var rAF = window.requestAnimationFrame	||
 	window.webkitRequestAnimationFrame	||
@@ -6,6 +6,62 @@ var rAF = window.requestAnimationFrame	||
 	window.oRequestAnimationFrame		||
 	window.msRequestAnimationFrame		||
 	function (callback) { window.setTimeout(callback, 1000 / 60); };
+
+//egscroll [#4] start
+//addEventListener polyfill 1.0 / Eirik Backer / MIT Licence
+(function(win, doc){
+	if(win.addEventListener)return;		//No need to polyfill
+
+	function docHijack(p){var old = doc[p];doc[p] = function(v){return addListen(old(v));};}
+	function addEvent(on, fn, self){
+		return (self = this).attachEvent('on' + on, function(evt){
+			var e = evt || win.event;
+			e.preventDefault  = evt.preventDefault  || function(){e.returnValue = false;};
+			e.stopPropagation = evt.stopPropagation || function(){e.cancelBubble = true;};
+
+			/** custom start by sculove **/
+			e.currentTarget = e.currentTarget || self;
+ 			e.target = e.target || e.srcElement;
+ 			if (!e.relatedTarget) {
+          if (e.type == 'mouseover') e.relatedTarget = e.fromElement;
+          if (e.type == 'mouseout') e.relatedTarget = e.toElement;
+      }
+
+			if (!e.pageX && e.clientX) {
+				var html = document.documentElement;
+				var body = document.body;
+				e.pageX = e.clientX + (html.scrollLeft || body && body.scrollLeft || 0);
+				e.pageX -= html.clientLeft || 0;
+				e.pageY = e.clientY + (html.scrollTop || body && body.scrollTop || 0);
+				e.pageY -= html.clientTop || 0;
+			}
+
+			if (typeof fn === 'function') {
+				fn.call(self, e);
+			} else if (typeof fn === 'object' && fn.handleEvent) {
+				fn.handleEvent.call(fn, e);
+			}
+			/** custom end by sculove **/
+		});
+	}
+	function addListen(obj, i){
+		i = obj.length;
+		if(i)while(i--)obj[i].addEventListener = addEvent;
+		else obj.addEventListener = addEvent;
+		return obj;
+	}
+
+	addListen([doc, win]);
+	if('Element' in win) win.Element.prototype.addEventListener = addEvent;			//IE8
+	else{																			//IE < 8
+		doc.attachEvent('onreadystatechange', function(){addListen(doc.all);});		//Make sure we also init at domReady
+		docHijack('getElementsByTagName');
+		docHijack('getElementById');
+		docHijack('createElement');
+		addListen(doc.all);
+	}
+})(window, document);
+//egscroll [#4] end
 
 var utils = (function () {
 	var me = {};
@@ -48,8 +104,9 @@ var utils = (function () {
 	};
 
 	me.prefixPointerEvent = function (pointerEvent) {
-		return window.MSPointerEvent ? 
-			'MSPointer' + pointerEvent.charAt(9).toUpperCase() + pointerEvent.substr(10):
+		//egscroll [#8]
+		return window.MSPointerEvent ?
+			'MSPointer' + pointerEvent.charAt(7).toUpperCase() + pointerEvent.substr(8):
 			pointerEvent;
 	};
 
@@ -86,7 +143,8 @@ var utils = (function () {
 		hasTransform: _transform !== false,
 		hasPerspective: _prefixStyle('perspective') in _elementStyle,
 		hasTouch: 'ontouchstart' in window,
-		hasPointer: window.PointerEvent || window.MSPointerEvent, // IE10 is prefixed
+		//egscroll [#4]
+		hasPointer: !!(window.PointerEvent || window.MSPointerEvent), // IE10 is prefixed
 		hasTransition: _prefixStyle('transition') in _elementStyle
 	});
 
@@ -258,8 +316,12 @@ function IScroll (el, options) {
 
 		snapThreshold: 0.334,
 
-// INSERT POINT: OPTIONS 
-
+// INSERT POINT: OPTIONS
+		//egscroll [#1] start
+		disablePointer : !utils.hasPointer,
+		disableTouch : utils.hasPointer || !utils.hasTouch,
+		disableMouse : utils.hasPointer || utils.hasTouch,
+		//egscroll [#1] end
 		startX: 0,
 		startY: 0,
 		scrollY: true,
@@ -275,7 +337,9 @@ function IScroll (el, options) {
 
 		HWCompositing: true,
 		useTransition: true,
-		useTransform: true
+		useTransform: true,
+		//egscroll [#4]
+		bindToWrapper: typeof window.onmousedown == "undefined"
 	};
 
 	for ( var i in options ) {
@@ -318,7 +382,7 @@ function IScroll (el, options) {
 
 // INSERT POINT: NORMALIZATION
 
-	// Some defaults	
+	// Some defaults
 	this.x = 0;
 	this.y = 0;
 	this.directionX = 0;
@@ -362,7 +426,10 @@ IScroll.prototype = {
 
 	destroy: function () {
 		this._initEvents(true);
-
+		//egscroll [#12] start
+		clearTimeout(this.resizeTimeout);
+ 		this.resizeTimeout = null;
+ 		//egscroll [#12] end
 		this._execEvent('destroy');
 	},
 
@@ -381,9 +448,21 @@ IScroll.prototype = {
 	_start: function (e) {
 		// React to left mouse button only
 		if ( utils.eventType[e.type] != 1 ) {
-			if ( e.button !== 0 ) {
+			//egscroll [#4] start
+			// http://unixpapa.com/js/mouse.html
+			var button;
+			if (!e.which) {
+				/* IE case */
+				button = (e.button < 2) ? 0 :
+				         ((e.button == 4) ? 1 : 2);
+			} else {
+				/* All others */
+				button = e.button;
+			}
+			if ( button !== 0 ) {
 				return;
 			}
+			//egscroll [#4] end
 		}
 
 		if ( !this.enabled || (this.initiated && utils.eventType[e.type] !== this.initiated) ) {
@@ -404,9 +483,11 @@ IScroll.prototype = {
 		this.directionX = 0;
 		this.directionY = 0;
 		this.directionLocked = 0;
-
-		this._transitionTime();
-
+		//egscroll [#11] start
+		if ( this.options.useTransition ) {
+			this._transitionTime();
+		}
+		//egscroll [#11] end
 		this.startTime = utils.getTime();
 
 		if ( this.options.useTransition && this.isInTransition ) {
@@ -762,9 +843,13 @@ IScroll.prototype = {
 
 		this.isInTransition = this.options.useTransition && time > 0;
 
-		if ( !time || (this.options.useTransition && easing.style) ) {
-			this._transitionTimingFunction(easing.style);
-			this._transitionTime(time);
+		if ( !time ) {
+			//egscroll [#11] start
+			if (this.options.useTransition && easing.style) {
+				this._transitionTimingFunction(easing.style);
+				this._transitionTime(time);
+			}
+			//egscroll [#11] end
 			this._translate(x, y);
 		} else {
 			this._animate(x, y, time, easing.fn);
@@ -1043,7 +1128,10 @@ IScroll.prototype = {
 		if ( !this.enabled ) {
 			return;
 		}
-
+		//egscroll [#12] start
+		clearTimeout(this.wheelTimeout);
+		this.wheelTimeout = null;
+		//egscroll [#12] end
 		e.preventDefault();
 		e.stopPropagation();
 
@@ -1712,6 +1800,12 @@ Indicator.prototype = {
 	},
 
 	destroy: function () {
+		//egscroll [#12] start
+		if ( this.options.fadeScrollbars ) {
+			clearTimeout(this.fadeTimeout);
+			this.fadeTimeout = null;
+		}
+		//egscroll [#12] end
 		if ( this.options.interactive ) {
 			utils.removeEvent(this.indicator, 'touchstart', this);
 			utils.removeEvent(this.indicator, utils.prefixPointerEvent('pointerdown'), this);
@@ -1902,7 +1996,7 @@ Indicator.prototype = {
 				this.maxBoundaryX = this.maxPosX;
 			}
 
-			this.sizeRatioX = this.options.speedRatioX || (this.scroller.maxScrollX && (this.maxPosX / this.scroller.maxScrollX));	
+			this.sizeRatioX = this.options.speedRatioX || (this.scroller.maxScrollX && (this.maxPosX / this.scroller.maxScrollX));
 		}
 
 		if ( this.options.listenY ) {
