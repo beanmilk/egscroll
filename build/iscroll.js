@@ -1109,6 +1109,10 @@ IScroll.prototype = {
 		utils.addEvent(this.wrapper, 'DOMMouseScroll', this);
 
 		this.on('destroy', function () {
+			//egscroll [#12] start
+			clearTimeout(this.wheelTimeout);
+			this.wheelTimeout = null;
+			//egscroll [#12] end
 			utils.removeEvent(this.wrapper, 'wheel', this);
 			utils.removeEvent(this.wrapper, 'mousewheel', this);
 			utils.removeEvent(this.wrapper, 'DOMMouseScroll', this);
@@ -1119,10 +1123,6 @@ IScroll.prototype = {
 		if ( !this.enabled ) {
 			return;
 		}
-		//egscroll [#12] start
-		clearTimeout(this.wheelTimeout);
-		this.wheelTimeout = null;
-		//egscroll [#12] end
 		e.preventDefault();
 		e.stopPropagation();
 
