@@ -555,6 +555,8 @@ IScroll.prototype = {
 		if ( this.directionLocked == 'h' ) {
 			if ( this.options.eventPassthrough == 'vertical' ) {
 				e.preventDefault();
+				//egscroll [#5]
+				e.stopPropagation();
 			} else if ( this.options.eventPassthrough == 'horizontal' ) {
 				this.initiated = false;
 				return;
@@ -564,6 +566,8 @@ IScroll.prototype = {
 		} else if ( this.directionLocked == 'v' ) {
 			if ( this.options.eventPassthrough == 'horizontal' ) {
 				e.preventDefault();
+				//egscroll [#5]
+				e.stopPropagation();
 			} else if ( this.options.eventPassthrough == 'vertical' ) {
 				this.initiated = false;
 				return;
